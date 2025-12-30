@@ -12,7 +12,8 @@ set -euo pipefail
 # Project root directory
 RootPath="/data/twang15/wsj/scMIC"
 cd "${RootPath}"
-
+mkdir Figure2/
+cd Figure2/
 # create environment
 conda env create -f 1.\ scMIC_Figure2.yml
 
@@ -20,8 +21,6 @@ conda env create -f 1.\ scMIC_Figure2.yml
 # 0. Data download
 ############################################
 
-mkdir Figure2/
-cd Figure2/
 mkdir -p GSE249057
 cd GSE249057
 wget https://ftp.ncbi.nlm.nih.gov/geo/series/GSE249nnn/GSE249057/suppl/GSE249057_RAW.tar
