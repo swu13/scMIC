@@ -2,31 +2,37 @@
 
 ## Introduction
 
-We we propose an optimal transport-based framework, `scMIC`, to identify metastasis-initiating cells (MICs) from primary tumor cells.
+We propose an optimal transport¨Cbased framework, `scMIC`, for identifying metastasis-initiating cells (MICs) from primary tumor single-cell transcriptomic data.
 
-1. `Processing.R`£º Some utilies for preprocessing of single-cell data
+# Repository Structure
 
-2. `scMIC.py`: input tumor cells of paired primary and metastasis cancer samples to identify MICs in primary tumor.
+The repository is organized as follows:
 
-3. `GeneProgram.py`: Determine MIC-related latent based on single-cell data and MIC labels.
+1. `Processing.R`£º Utility functions for preprocessing single-cell RNA-seq data.
 
-4. `scMIC_unpaired.py`: Identificaiton of MICs in query primary tumor cells based on reference primary tumor cells with reference MIC labels. 
+2. `scMIC.py`: Identifies MICs in primary tumors using paired primary and metastatic single-cell samples.
 
-5. `Figure2`: Codes for the data downloading, rocessing and analysis for the Figure2 of the manuscript.
+3. `GeneProgram.py`: Infers MIC-related latent representations based on single-cell data and MIC labels.
 
-6. `Figure3`: Codes for the data downloading, rocessing and analysis for the Figure3 of the manuscript.
+4. `scMIC_unpaired.py`: Identifies MICs in query primary tumor cells using a reference primary tumor dataset with known MIC labels (unpaired setting).
 
-7. `Figure4`: Codes for the data downloading, rocessing and analysis for the Figure4 of the manuscript.
+5. `Figure2`: Code for data downloading, preprocessing, and analysis used to generate Figure 2 in the manuscript.
 
-8. `Figure5`: Codes for the data downloading, rocessing and analysis for the Figure5 of the manuscript.
+6. `Figure3`: Code for data downloading, preprocessing, and analysis used to generate Figure 3 in the manuscript.
 
-9. `Figure6`: Codes for the data downloading, rocessing and analysis for the Figure6 of the manuscript.
+7. `Figure4`: Code for data downloading, preprocessing, and analysis used to generate Figure 4 in the manuscript.
 
-10. `Discussion`: Codes for the data downloading, rocessing and analysis for the Discussion of the manuscript.
+8. `Figure5`: Code for data downloading, preprocessing, and analysis used to generate Figure 5 in the manuscript.
+
+9. `Figure6`: Code for data downloading, preprocessing, and analysis used to generate Figure 6 in the manuscript.
+
+10. `Discussion`: Code for data downloading, preprocessing, and analysis used in the Discussion section of the manuscript.
 
 ## Overview of scMIC
 ![image](https://github.com/swu13/scMIC/blob/main/scMIC.png)
 
 ## Citation
+
+If you use scMIC in your research, please cite:
 
 [1] Sijia Wu, Jiangpeng Wei, Xin Liu, Jiajin Zhang, Jianguo Wen, Liyu Huang, Xiaobo Zhou, Identification and Characterization of Metastasis-initiating cells
