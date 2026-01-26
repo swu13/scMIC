@@ -8,7 +8,7 @@ We propose an optimal transport¨Cbased framework, `scMIC`, for identifying metas
 
 The repository is organized as follows:
 
-1. `Processing.R`£º Utility functions for preprocessing single-cell RNA-seq data.
+1. `Processing.R`:  Utility functions for preprocessing single-cell RNA-seq data.
 
 2. `scMIC.py`: Identifies MICs in primary tumors using paired primary and metastatic single-cell samples.
 
