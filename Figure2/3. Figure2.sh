@@ -13,7 +13,7 @@ set -euo pipefail
 # Project root directory
 RootPath="/data/twang15/wsj/scMIC"
 cd "${RootPath}"
-
+cd Figure2/
 ############################################
 # 1. Figure2A
 #    -Input:10X-format files of GSE249057
@@ -23,7 +23,9 @@ cd "${RootPath}"
 ############################################
 
 Rscript -e '
-    source("../Processing.R");            
+    source("../Processing.R"); 
+    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+    set.seed(1234)           
     scData0=scRead(Path="GSE249057/GSM7925719_0h/", Label = "0",RNAfeature=200,minRNAcount=1000,maxRNAcount=8000,mt=15,rb=100,hb=100); #Data from 0 step;
     scData6=scRead(Path="GSE249057/GSM7925720_6h/", Label = "6h",RNAfeature=200,minRNAcount=1000,maxRNAcount=8000,mt=15,rb=100,hb=100);
     scData48=scRead(Path="GSE249057/GSM7925721_48h/", Label = "48h",RNAfeature=200,minRNAcount=1000,maxRNAcount=8000,mt=15,rb=100,hb=100);
@@ -50,6 +52,8 @@ Rscript -e '
 ############################################
 Rscript -e '
     library(Seurat);
+    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+    set.seed(1234) 
     AData = readRDS("GSE249057/GSM7925723_4mo/ScData.pca.rds");
     GeneSets=read.table("GSE249057/h.all.v2025.1.Hs.symbols.gmt",sep="\t",header=FALSE,fill=TRUE,check.names=FALSE);
     eachgeneset = GeneSets[14, ];  #EMT
@@ -57,7 +61,6 @@ Rscript -e '
     eachgeneset = eachgeneset[which(eachgeneset != "")];
     genes = list("genes" = eachgeneset[eachgeneset %in% rownames(AData)]);
     AData[["joined"]] <- JoinLayers(AData[["RNA"]])
-    set.seed(1234);
     eachgenesetscore = AddModuleScore(object = AData, features = genes, name = "EMT",assay="joined",slot = "data" );
     AEMT=data.frame("sample"=eachgenesetscore@meta.data$Sampleid,"group"=eachgenesetscore@meta.data$seurat_clusters,"EMT"=eachgenesetscore@meta.data$EMT1);
     write.table(AEMT, file = "GSE249057/GSM7925723_4mo/EMT.txt", sep = "\t", quote = FALSE, row.names = TRUE); 
@@ -72,7 +75,9 @@ Rscript -e '
 ############################################
 
 Rscript -e '
-    source("../Processing.R");            
+    source("../Processing.R");
+    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+    set.seed(1234)           
     scData0=scRead(Path="GSE249057/GSM7925719_0h/", Label = "0",RNAfeature=200,minRNAcount=1000,maxRNAcount=8000,mt=15,rb=100,hb=100); #Data from 0 step;          
     Normalize0 = scNormalize(scData0, NormalizeMethod = "LogNormalize", ScaleFactor = 10000);  
     sccluster(Normalize0,"GSE249057/GSM7925719_0h/"); 
@@ -100,13 +105,14 @@ Rscript -e '
 
 Rscript -e '
     library(Seurat);
+    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+    set.seed(1234)
     PData = readRDS("GSE249057/GSM7925719_0h/ScData.pca.rds");    
     GeneSets=read.table("GSE249057/h.all.v2025.1.Hs.symbols.gmt",sep="\t",header=FALSE,fill=TRUE,check.names=FALSE);#download from MSigDB
     eachgeneset = GeneSets[14, ];  #EMT
     eachgeneset = as.character(eachgeneset[3:length(eachgeneset)]);
     eachgeneset = eachgeneset[which(eachgeneset != "")];
     genes = list("genes" = eachgeneset[eachgeneset %in% rownames(PData)]); 
-    set.seed(1234);
     eachgenesetscore = AddModuleScore(object = PData, features = genes, name = "EMT",assay="RNA",slot = "data");
     PEMT = eachgenesetscore@meta.data[,c("seurat_clusters","EMT1")];            
     write.table(PEMT, file = "GSE249057/GSM7925719_0h/EMT.txt", sep = "\t", quote = FALSE, row.names = TRUE); 
@@ -127,6 +133,8 @@ Rscript -e '
 
 Rscript -e '
     library(CytoTRACE2);
+    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+    set.seed(1234)
     PData = readRDS("GSE249057/GSM7925719_0h/ScData.pca.rds"); 
     PrimaryMatrix=PData@assays$RNA@layers$data;
     rownames(PrimaryMatrix)=rownames(PData);

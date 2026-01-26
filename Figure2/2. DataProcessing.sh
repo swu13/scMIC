@@ -39,8 +39,6 @@ for file in *_barcodes.tsv.gz; do
 done
 
 cd ../
-echo "Step 0 completed: GSE249057 data prepared."
-
 
 ############################################
 # 1. Primary and metastatic tumor
@@ -57,6 +55,8 @@ echo "Step 0 completed: GSE249057 data prepared."
 #Primary tumor samples clusteringa and DEGs calculation/ or using HVGs
 Rscript -e '
   source("../Processing.R");
+  Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+  set.seed(1234)
   PrimaryPath = "GSE249057/GSM7925719_0h/"  
   PrimaryData <- scRead(PrimaryPath, Label = "Primary",RNAfeature=200,minRNAcount=1000,maxRNAcount=8000,mt=15,rb=100,hb=100);
   PrimaryNormalizedData <- scNormalize(PrimaryData, NormalizeMethod = "LogNormalize", ScaleFactor = 10000)
@@ -74,6 +74,8 @@ Rscript -e '
 
 Rscript -e '
   source("../Processing.R");
+  Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+  set.seed(1234)
   MetastasisPath="GSE249057/GSM7925723_4mo/"
   MetastasisData <- scRead(MetastasisPath, Label = "Metastasis",RNAfeature=200,minRNAcount=1000,maxRNAcount=8000,mt=15,rb=100,hb=100)
   MetastasisNormalizedData <- scNormalize(MetastasisData, NormalizeMethod = "LogNormalize", ScaleFactor = 10000)  
@@ -99,8 +101,8 @@ Rscript -e '
   genelist <- intersect(VariableFeatures(PrimaryTumour),rownames(MetastasisCount))    
   PrimaryCount2 <- PrimaryCount[genelist, ]
   MetastasisCount2 <- MetastasisCount[genelist, ]
-  write.csv(PrimaryCount2, paste0(OutputPath, '/Primary/PrimaryCountHVG.csv'), quote = FALSE)
-  write.csv(MetastasisCount2, paste0(OutputPath, '/Metastasis/MetastasisCountHVG.csv'), quote = FALSE)
+  write.csv(PrimaryCount2, paste0(OutputPath, "/Primary/PrimaryCountHVG.csv"), quote = FALSE)
+  write.csv(MetastasisCount2, paste0(OutputPath, "/Metastasis/MetastasisCountHVG.csv"), quote = FALSE)
 '
 
 ############################################
