@@ -1,1 +1,33 @@
+# ==========================================================
+# Environment: scMIC_Figure3
+# Purpose:
+#   - scMIC proximity / OT analysis
+#   - Used for Figure 3 and Supplementary Figures
+#
+# Key components:
+#   - Seurat / Monocle: single-cell clustering & trajectory
+#   - POT: (Unbalanced) Optimal Transport for scMIC
+#   - scvi-tools: embedding / latent space
+#
+# Created by: swu13
+# ==========================================================
+
+name: scMIC_Figure3
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  # ---------- R packages ----------
+  - r-seurat                  # single-cell RNA-seq analysis
+  - bioconductor-dropletutils # writting 10X single-cell 
+  - bioconductor-monocle      # trajectory inference
+  - r-igraph==2.0.3           # for monocle ordercell
+
+  # ---------- Python packages ----------
+  - pot                       # Python Optimal Transport (UOT) (used in scMIC.py)
+  - numpy                     # numerical computation (used in scMIC.py)
+  - pandas                    # data manipulation (used in scMIC.py)
+  - scvi-tools                # deep latent embeddings (used in scMIC.py)
 
