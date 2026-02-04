@@ -1,1 +1,56 @@
+# ==========================================================
+# Environment: scMIC_Figure4
+# Purpose:
+#   - scMIC proximity / OT analysis
+#   - Used for Figure 4 and Supplementary Figures
+#
+# Key components:
+#   - Seurat / SPATA2: single-cell clustering & cnv analysis
+#   - POT: (Unbalanced) Optimal Transport for scMIC
+#   - scvi-tools: embedding / latent space
+#   - SPATA2: spatial transcriptomics visualization and analysis
+#
+# Created by: swu13
+# ==========================================================
+
+name: scMIC_Figure4
+
+channels:
+  - conda-forge
+  - bioconda
+  - r
+
+dependencies:
+  # ---------- R packages ----------
+  - r-seurat                           # single-cell RNA-seq analysis
+  - bioconductor-dropletutils          # writting 10X single-cell  ??? 
+  - r-devtools                         # used to install SPATA2 from GitHub
+  - bioconductor-delayedarray          # for SPATA2
+  - bioconductor-delayedmatrixstats    # for SPATA2
+  - bioconductor-singlecellexperiment  # for SPATA2
+  - bioconductor-batchelor             # for SPATA2
+  - bioconductor-ebimage               # for SPATA2
+  - r-matrix.utils                     # for SPATA2
+  - bioconductor-infercnv              # for SPATA2
+  - r-ggmosaic                         # for SPATA2
+  - r-concaveman                       # for SPATA2
+  - r-ggalt                            # for SPATA2
+  - r-hdf5r                            # for SPATA2
+  - r-magick                           # for SPATA2
+  - r-ggpubr                           # for SPATA2
+  - openblas                           # for scCancer
+  - bioconductor-gsva                  # for scCancer
+  - bioconductor-scds                  # for scCancer
+  - r-leidenbase                       # for scCancer
+  - r-garnett                          # for scCancer
+  - r-terra                            # for scCancer
+  - r-harmony                          # for scCancer
+  - r-liger                            # for scCancer
+  #- r-nnlm                             # for scCancer 
+
+  # ---------- Python packages ----------
+  - pot                   # Python Optimal Transport (UOT)
+  - numpy                 # numerical computation
+  - pandas                # data manipulation
+  - scvi-tools            # deep latent embeddings
 
