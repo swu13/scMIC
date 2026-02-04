@@ -1,1 +1,40 @@
+# ==========================================================
+# Environment: scMIC_Figure5
+# Purpose:
+#   - scMIC proximity / OT analysis
+#   - Used for Figure 5 and Supplementary Figures
+#
+# Key components:
+#   - Seurat: single-cell clustering
+#   - torch: for Gene Program script
+#
+# Created by: swu13
+# ==========================================================
+
+name: scMIC_Figure5
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  # ---------- R packages ----------
+  - r-seurat                           # single-cell RNA-seq analysis
+  - r-webgestaltr                      # enrichment analysis
+  - r-survival                         # survival analysis
+
+  # ---------- Python packages ----------
+  - python                             # Gene Program script
+  - pip
+  - pip:
+      - numpy                          # Gene Program script
+      - pandas                         # Gene Program script
+      - scipy                          # Gene Program script
+      - matplotlib                     # Gene Program script
+      - seaborn                        # Gene Program script
+      - scikit-learn                   # Gene Program script
+      - torch                          # Gene Program script
+
+
+  
 
