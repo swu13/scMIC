@@ -1,1 +1,32 @@
+# ==========================================================
+# Environment: scMIC_Figure2
+# Purpose:
+#   - scMIC proximity / OT analysis
+#   - Used for Figure 3 and Supplementary Figures
+#
+# Key components:
+#   - Seurat / cytotrace: single-cell clustering & stemness
+#   - POT: (Unbalanced) Optimal Transport for scMIC
+#   - scvi-tools: embedding / latent space
+#
+# Created by: swu13
+# ==========================================================
+
+name: scMIC_Figure2
+
+channels:
+  - conda-forge
+  - bioconda
+  - dnachun
+
+dependencies:
+  # ---------- R packages ----------
+  - r-seurat              # single-cell RNA-seq analysis
+  - r-cytotrace2          # stemness evaluation
+
+  # ---------- Python packages ----------
+  - pot                   # Python Optimal Transport (UOT) (used in scMIC.py)
+  - numpy                 # numerical computation (used in scMIC.py)
+  - pandas                # data manipulation (used in scMIC.py)
+  - scvi-tools            # deep latent embeddings (used in scMIC.py)
 
