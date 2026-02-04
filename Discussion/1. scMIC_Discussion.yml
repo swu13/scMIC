@@ -1,1 +1,39 @@
+# ==========================================================
+# Environment: scMIC_Discussion
+# Purpose:
+#   - biomarker presentation
+#   - Used for MIC identification based on unpaired data 
+#
+# Key components:
+#   - Seurat: single-cell clustering
+#
+# Created by: swu13
+# ==========================================================
+
+name: scMIC_Discussion
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  # ---------- R packages ----------
+  - r-seurat                           # single-cell RNA-seq analysis
+  
+  # ---------- Python packages ----------
+  - python                             # scFoundation
+  - pip:
+    - numpy
+    - pandas
+    - scanpy
+    - scipy
+    - einops
+    - local_attention
+    - torch
+    - torchvision
+    - torchaudio
+
+
+
+  
 
