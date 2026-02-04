@@ -1,1 +1,26 @@
+# ==========================================================
+# Environment: scMIC_Figure6
+# Purpose:
+#   - biomarker presentation
+#   - Used for Figure 6 
+#
+# Key components:
+#   - Seurat: single-cell clustering
+#
+# Created by: swu13
+# ==========================================================
+
+name: scMIC_Figure6
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  # ---------- R packages ----------
+  - r-seurat                           # single-cell RNA-seq analysis
+  - r-survival                         # survival analysis
+
+
+  
 
