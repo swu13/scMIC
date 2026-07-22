@@ -41,33 +41,156 @@ Rscript -e '
     prop_tab <- prop.table(tab, margin = 1); 
     write.table(prop_tab, file = "GSE249057/GSM7925723_4mo/prop_tab.txt", sep = "\t", quote = FALSE, row.names = TRUE); 
 '
-
 ############################################
 # 2. Figure2B
-#    -Input:Normalized ScData.pca.rds during Figure2A
-#           h.all.v2025.1.Hs.symbols.gmt from MSigDB
-#           the genes from original data are transferred to human genes
-#    -Output:EMT.txt
-#            EMT scores
+#    -Input:Normalized ScData.pca.rds during Figure2C
+#    -Output:monocle.rds
+#            trajectory.png
 ############################################
+
+Rscript -e '
+    library(Seurat); 
+    library(monocle);    
+    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+    set.seed(1234)
+    AData = readRDS("GSE249057/GSM7925723_4mo/ScData.pca.rds");
+    PData = subset(AData,Sampleid==0)
+    PData[["joined"]] <- JoinLayers(PData[["RNA"]])
+    DEGs <- FindAllMarkers(PData,assay = "joined",only.pos = TRUE,min.pct = 0.1,logfc.threshold = 0.25)
+    SigDEGs <- DEGs #subset(DEGs,p_val_adj<0.05)
+    monoclegenes = unique(SigDEGs$gene)
+    MonocleData=subset(PData,features=monoclegenes);
+    counts = as.matrix(MonocleData@assays$joined@layers$counts)
+    rownames(counts) = rownames(MonocleData[["joined"]])
+    colnames(counts) = colnames(MonocleData[["joined"]])
+    data <- as(counts, "sparseMatrix");
+    pd <- new("AnnotatedDataFrame", data = MonocleData@meta.data);
+    fData <- data.frame(gene_short_name = row.names(data), row.names = row.names(data));
+    fd <- new("AnnotatedDataFrame", data = fData);
+    set.seed(1234);              
+    mycds <- newCellDataSet(data,phenoData = pd,featureData = fd,expressionFamily = negbinomial.size());
+    mycds <- estimateSizeFactors(mycds); #normalize the expression difference among cells.
+    mycds <- setOrderingFilter(mycds, monoclegenes);
+    mycds <- reduceDimension(mycds, max_components = 2, method = "DDRTree",auto_param_selection=FALSE);
+    mycds <- orderCells(mycds);
+    mycds$Pseudotime <- max(mycds$Pseudotime)-mycds$Pseudotime
+    saveRDS(mycds,file = "GSE249057/GSM7925723_4mo/monocle.rds")    
+    png("GSE249057/GSM7925723_4mo/trajectory.png",width=500,height=300)
+    cluster_colors=c("0" = "#FBE3D6", "1" = "#C00000","2" = "#D9F2D0","3" = "#C1E5F5","4" = "#F2CFEE", "5" = "#C2F1C8", "6" = "#DCEAF7")
+    print(plot_cell_trajectory(mycds,color_by="seurat_clusters") +
+     scale_color_manual(values = cluster_colors))
+    dev.off()
+'
+
+############################################
+# 3. Figure2C
+#    -Input:Normalized ScData.pca.rds during Figure2A
+#           Stemness.txt from CancerSEA
+#           the genes from original data are transferred to human genes
+#    -Output:Stemness.txt
+#            Stemness scores
+############################################
+wget "http://biocc.hrbmu.edu.cn/CancerSEA/download/signature/Stemness.txt"
 Rscript -e '
     library(Seurat);
     Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
     set.seed(1234) 
     AData = readRDS("GSE249057/GSM7925723_4mo/ScData.pca.rds");
-    GeneSets=read.table("GSE249057/h.all.v2025.1.Hs.symbols.gmt",sep="\t",header=FALSE,fill=TRUE,check.names=FALSE);
-    eachgeneset = GeneSets[14, ];  #EMT
-    eachgeneset = as.character(eachgeneset[3:length(eachgeneset)]);
-    eachgeneset = eachgeneset[which(eachgeneset != "")];
-    genes = list("genes" = eachgeneset[eachgeneset %in% rownames(AData)]);
-    AData[["joined"]] <- JoinLayers(AData[["RNA"]])
-    eachgenesetscore = AddModuleScore(object = AData, features = genes, name = "EMT",assay="joined",slot = "data" );
-    AEMT=data.frame("sample"=eachgenesetscore@meta.data$Sampleid,"group"=eachgenesetscore@meta.data$seurat_clusters,"EMT"=eachgenesetscore@meta.data$EMT1);
-    write.table(AEMT, file = "GSE249057/GSM7925723_4mo/EMT.txt", sep = "\t", quote = FALSE, row.names = TRUE); 
+    PData = subset(AData,Sampleid==0)
+    GeneSets=read.table("Stemness.txt",sep="\t",header=TRUE,fill=TRUE,check.names=FALSE);#download from CancerSEA
+    eachgeneset = GeneSets$GeneName;
+    genes = list("genes" = eachgeneset[eachgeneset %in% rownames(PData)]);
+    PData[["joined"]] <- JoinLayers(PData[["RNA"]])
+    PrimaryMatrix=PData@assays$RNA@layers$data;
+    rownames(PrimaryMatrix) <- rownames(PData[["joined"]])
+    colnames(PrimaryMatrix) <- colnames(PData[["joined"]])
+    eachgenesetscore = AddModuleScore(object = PData, features = genes, name = "Stem",assay="joined",slot = "data" );
+    PStem=data.frame("sample"=eachgenesetscore@meta.data$Sampleid,"group"=eachgenesetscore@meta.data$seurat_clusters,
+                     "Stem"=eachgenesetscore@meta.data$Stem1,"ITGA6"=PrimaryMatrix["ITGA6",]);    
+    write.table(PStem, file = "GSE249057/GSM7925723_4mo/Stemness.txt", sep = "\t", quote = FALSE, row.names = TRUE); 
+    index = which(PStem$group == 1);
+    for(i in 0:6){
+      index1 = which(PStem$group == i);
+      ttest=t.test(PStem$Stem[index],PStem$Stem[index1]);
+      print(c(i,ttest$p.value,as.double(ttest$estimate)))
+    }
+    for(i in 0:6){
+      index1 = which(PStem$group == i);
+      ttest=t.test(PStem$ITGA6[index],PStem$ITGA6[index1]);
+      print(c(i,ttest$p.value,as.double(ttest$estimate)))
+    }
 '
 
 ############################################
-# 3. Figure2C
+# 4. Figure2D
+#    -Input:Normalized ScData.pca.rds during Figure2A
+#           Stemness.txt from CancerSEA
+#           the genes from original data are transferred to human genes
+#    -Output:Metastasis.txt
+#            Metastasis scores
+############################################
+wget "http://biocc.hrbmu.edu.cn/CancerSEA/download/signature/Metastasis.txt"
+
+Rscript -e '
+    library(Seurat);
+    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+    set.seed(1234) 
+    AData = readRDS("GSE249057/GSM7925723_4mo/ScData.pca.rds");
+    PData = subset(AData,Sampleid==0)
+    GeneSets=read.table("Metastasis.txt",sep="\t",header=TRUE,fill=TRUE,check.names=FALSE);#download from CancerSEA
+    eachgeneset = GeneSets$GeneName;
+    genes = list("genes" = eachgeneset[eachgeneset %in% rownames(PData)]);
+    PData[["joined"]] <- JoinLayers(PData[["RNA"]])
+    PrimaryMatrix=PData@assays$RNA@layers$data;
+    rownames(PrimaryMatrix) <- rownames(PData[["joined"]])
+    colnames(PrimaryMatrix) <- colnames(PData[["joined"]])
+    eachgenesetscore = AddModuleScore(object = PData, features = genes, name = "Meta",assay="joined",slot = "data" );
+    PMeta=data.frame("sample"=eachgenesetscore@meta.data$Sampleid,"group"=eachgenesetscore@meta.data$seurat_clusters,
+                     "Meta"=eachgenesetscore@meta.data$Meta1,"CD44"=PrimaryMatrix["CD44",]);    
+    write.table(PMeta, file = "GSE249057/GSM7925723_4mo/Metastasis.txt", sep = "\t", quote = FALSE, row.names = TRUE); 
+    index = which(PMeta$group == 1);
+    for(i in 0:6){
+      index1 = which(PMeta$group == i);
+      ttest=t.test(PMeta$Meta[index],PMeta$Meta[index1]);
+      print(c(i,ttest$p.value,as.double(ttest$estimate)))
+    }
+    for(i in 0:6){
+      index1 = which(PMeta$group == i);
+      ttest=t.test(PMeta$CD44[index],PMeta$CD44[index1]);
+      print(c(i,ttest$p.value,as.double(ttest$estimate)))
+    }
+'
+
+############################################
+# 5. Figure2E
+#    -Input:Normalized ScData.pca.rds during Figure2A
+#           the genes from original data are transferred to human genes
+#    -Output:EMT.png
+############################################
+
+
+Rscript -e '
+    library(Seurat);
+    library(ggplot2)
+    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
+    set.seed(1234) 
+    AData = readRDS("GSE249057/GSM7925723_4mo/ScData.pca.rds");
+    PData = subset(AData,Sampleid==0)
+    PData[["joined"]] <- JoinLayers(PData[["RNA"]])
+    PrimaryMatrix=PData@assays$RNA@layers$data;
+    rownames(PrimaryMatrix) <- rownames(PData[["joined"]])
+    colnames(PrimaryMatrix) <- colnames(PData[["joined"]])
+    PEMT=data.frame("sample"=PData@meta.data$Sampleid,"group"=PData@meta.data$seurat_clusters,
+                     "CDH1"=PrimaryMatrix["CDH1",],"SNAI2"=PrimaryMatrix["SNAI2",],"TWIST1"=PrimaryMatrix["TWIST1",]); 
+    png("GSE249057/GSM7925723_4mo/EMT.png",width=750,height=300)
+    print(DotPlot(PData,features = c("CDH1","SNAI2","TWIST1"),group.by = "seurat_clusters",assay = "RNA")+coord_flip()+scale_color_gradient(low = "lightgrey",high = "#C00000"))
+    dev.off()
+'
+
+
+
+############################################
+# 6. Figure2F
 #    -Input:10X-format files of timepoint 0 of GSE249057
 #    -Output:prop_tab.txt
 #            probability of cell clusters at
@@ -94,101 +217,6 @@ Rscript -e '
     Pmeta$Allcluster = PmetaAll$seurat_clusters;
     write.table(table(Pmeta[,c("seurat_clusters","Allcluster")]),file = "GSE249057/GSM7925719_0h/clusterfraction.txt", sep = "\t", quote = FALSE, row.names = TRUE);
 ' 
-
-############################################
-# 4. Figure2D
-#    -Input:Normalized ScData.pca.rds during Figure2C
-#           h.all.v2025.1.Hs.symbols.gmt from MSigDB
-#    -Output:EMT.txt:EMT scores
-#            ttest comparison results
-############################################
-
-Rscript -e '
-    library(Seurat);
-    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
-    set.seed(1234)
-    PData = readRDS("GSE249057/GSM7925719_0h/ScData.pca.rds");    
-    GeneSets=read.table("GSE249057/h.all.v2025.1.Hs.symbols.gmt",sep="\t",header=FALSE,fill=TRUE,check.names=FALSE);#download from MSigDB
-    eachgeneset = GeneSets[14, ];  #EMT
-    eachgeneset = as.character(eachgeneset[3:length(eachgeneset)]);
-    eachgeneset = eachgeneset[which(eachgeneset != "")];
-    genes = list("genes" = eachgeneset[eachgeneset %in% rownames(PData)]); 
-    eachgenesetscore = AddModuleScore(object = PData, features = genes, name = "EMT",assay="RNA",slot = "data");
-    PEMT = eachgenesetscore@meta.data[,c("seurat_clusters","EMT1")];            
-    write.table(PEMT, file = "GSE249057/GSM7925719_0h/EMT.txt", sep = "\t", quote = FALSE, row.names = TRUE); 
-    for(i in 0:3){
-      ttresult=t.test(PEMT$EMT1[which(PEMT$seurat_clusters==4)],PEMT$EMT1[which(PEMT$seurat_clusters==i)]);
-      print(c(i,ttresult$p.value,as.double(ttresult$estimate)))  
-    }
-'
-
-
-############################################
-# 5. Figure2E
-#    -Input:Normalized ScData.pca.rds during Figure2C
-#           mh.all.v2025.1.Mm.symbols.gmt from MSigDB
-#    -Output:cytotrace.score.txt:stemness scores
-#            ttest comparison results
-############################################
-
-Rscript -e '
-    library(CytoTRACE2);
-    Sys.setenv(OMP_NUM_THREADS = 1,MKL_NUM_THREADS = 1,OPENBLAS_NUM_THREADS = 1,VECLIB_MAXIMUM_THREADS = 1)
-    set.seed(1234)
-    PData = readRDS("GSE249057/GSM7925719_0h/ScData.pca.rds"); 
-    PrimaryMatrix=PData@assays$RNA@layers$data;
-    rownames(PrimaryMatrix)=rownames(PData);
-    colnames(PrimaryMatrix)=colnames(PData);
-    results <- cytotrace2(as.data.frame(as.matrix(PrimaryMatrix)),species="human",is_seurat = FALSE,slot_type = "data");
-    results=results[rownames(PData@meta.data),];
-    OutputData=cbind(results,PData@meta.data);
-    write.table(OutputData,"GSE249057/GSM7925719_0h/cytotrace.score.txt",sep="\t",quote=FALSE,row.names=FALSE,col.names=TRUE);
-    for(i in 0:3){
-      ttresult=t.test(OutputData$CytoTRACE2_Score[which(OutputData$seurat_clusters==4)],OutputData$CytoTRACE2_Score[which(OutputData$seurat_clusters==i)]);
-      print(c(i,ttresult$p.value,as.double(ttresult$estimate)))
-    }
-'
-
-############################################
-# 6. Figure2F
-#    -Input:Normalized ScData.pca.rds during Figure2C
-#    -Output:marker.geneexpression.txt:marker expression
-#            marker.geneexpression.statistics.txt: statistics results
-############################################
-
-Rscript -e '
-    library(Seurat);
-    PData = readRDS("GSE249057/GSM7925719_0h/ScData.pca.rds");
-    Pmatrix = PData@assays$RNA@layers$data;
-    rownames(Pmatrix) = rownames(PData);
-    colnames(Pmatrix) = colnames(PData);
-    Genematrix = data.frame("CD44"=as.double(Pmatrix["CD44",]),"CST6"=as.double(Pmatrix["CST6",]),"C19orf33"=as.double(Pmatrix["C19orf33",]),
-                            "TACSTD2"=as.double(Pmatrix["TACSTD2",]),"S100A14"=as.double(Pmatrix["S100A14",]),"RHOD"=as.double(Pmatrix["RHOD",]),
-                            "TM4SF1"=as.double(Pmatrix["TM4SF1",]),"CD24"=as.double(Pmatrix["CD24",]),"ALDH1A3"=as.double(Pmatrix["ALDH1A3",]),
-                            "group"=as.character(PData@meta.data$seurat_clusters));
-    index = which(Genematrix$group == 4);
-    Otherindex = which(Genematrix$group != 4);
-    for(i in 1:(dim(Genematrix)[2]-1)){
-      ttest=t.test(Genematrix[index,i],Genematrix[-index,i]);
-      print(c(colnames(Genematrix)[i],ttest$p.value,as.double(ttest$estimate)))
-    }
-    Genematrix_new=data.frame("Gene"=c(rep("CD44",length(Otherindex)),rep("CST6",length(Otherindex)),rep("C19orf33",length(Otherindex)),rep("TACSTD2",length(Otherindex)),
-                                       rep("S100A14",length(Otherindex)),rep("RHOD",length(Otherindex)),rep("TM4SF1",length(Otherindex)),rep("CD24",length(Otherindex)),
-                                       rep("ALDH1A3",length(Otherindex))),
-                                       "NonMIC"=c(Genematrix$CD44[Otherindex],Genematrix$CST6[Otherindex],Genematrix$C19orf33[Otherindex],
-                                       Genematrix$TACSTD2[Otherindex],Genematrix$S100A14[Otherindex],Genematrix$RHOD[Otherindex],Genematrix$TM4SF1[Otherindex],
-                                       Genematrix$CD24[Otherindex],Genematrix$ALDH1A3[Otherindex]),
-                                       "MIC"=c(Genematrix$CD44[index],rep("",length(Otherindex)-length(index)),
-                                       Genematrix$CST6[index],rep("",length(Otherindex)-length(index)),
-                                       Genematrix$C19orf33[index],rep("",length(Otherindex)-length(index)),
-                                       Genematrix$TACSTD2[index],rep("",length(Otherindex)-length(index)),
-                                       Genematrix$S100A14[index],rep("",length(Otherindex)-length(index)),
-                                       Genematrix$RHOD[index],rep("",length(Otherindex)-length(index)),
-                                       Genematrix$TM4SF1[index],rep("",length(Otherindex)-length(index)),
-                                       Genematrix$CD24[index],rep("",length(Otherindex)-length(index)),
-                                       Genematrix$ALDH1A3[index],rep("",length(Otherindex)-length(index))));
-    write.table(Genematrix_new, file = "GSE249057/GSM7925719_0h/marker.geneexpression.txt", sep = "\t", quote = FALSE, row.names = TRUE);
-'
 
 
 ############################################
