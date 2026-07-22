@@ -60,8 +60,10 @@ Rscript -e '
                    nonMIC=c(PrimaryMatrix[gene,-index],rep("",maxnum-(ncol(Data)-length(index))))))
       }
     }
+    write.table(output[-1,], "MICscore.txt", sep = "\t", quote = FALSE, row.names = TRUE);
     #GSE277783
     pateints=c("Pt-1","Pt-2","Pt-3","Pt-4","Pt-5","Pt-6","Pt-7","Pt-8","Pt-9","Pt-10","Pt-11","Pt-13")
+    spatialMICcor=0
     for(patient in pateints){
       Data=readRDS(paste0("../Figure4/GSE277783/",patient,"/Primary/Tumour/ScData.pca.rds")); 
       Data$MIC = "N"
@@ -74,22 +76,20 @@ Rscript -e '
         }else{
           sum_OT=sum_OT+OPcor$V1
         }
-      }
-      Data$MIC  = ifelse(sum_OT>5,"Y","N");
+      }  
+      Data$MIC  = ifelse(sum_OT>20,"Y","N");
       PrimaryMatrix = Data@assays$RNA@layers$data;
       colnames(PrimaryMatrix) = colnames(Data);
       rownames(PrimaryMatrix) = rownames(Data); 
       index = which(Data@meta.data$MIC == "Y")  
-      if(length(index)>=100){
-        ttest=t.test(as.numeric(PrimaryMatrix[gene,index]),as.numeric(PrimaryMatrix[gene,-index]));
-        wilcoxtest=wilcox.test(as.numeric(PrimaryMatrix[gene,index]),as.numeric(PrimaryMatrix[gene,-index]));
-        print(c(patient,length(index),ncol(Data)-length(index),ttest$p.value,wilcoxtest$p.value,as.numeric(ttest$estimate)))
-        maxnum=max(length(index),ncol(Data)-length(index))
-        output=rbind(output,data.frame(sample=rep(patient,maxnum),MIC=c(PrimaryMatrix[gene,index],rep("",maxnum-length(index))),
-                   nonMIC=c(PrimaryMatrix[gene,-index],rep("",maxnum-(ncol(Data)-length(index))))))
+      if(length(index)>3){
+        cortest = cor.test(sum_OT[index],as.numeric(PrimaryMatrix[gene,index]),method="spearman")
+        print(c(patient,cortest$p.value,as.numeric(cortest$estimate),length(index)))
+        spatialMICcor=c(spatialMICcor,as.numeric(cortest$estimate))
       }
     }
-    write.table(output[-1,], "MICscore.txt", sep = "\t", quote = FALSE, row.names = TRUE);
+    spatialMICcor=spatialMICcor[-1]
+    print(t.test(spatialMICcor))
 '
 
 ############################################
