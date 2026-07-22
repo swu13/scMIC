@@ -30,6 +30,7 @@ def MICmap(Pri_embedding,Ref_embedding,RefPhenotypeFile,outputFile,neighbork):
     dist, idx = nn.kneighbors(Pri_emb)
     labelgroup = RefPheno.loc[Ref_emb.index[idx.flatten()], "group"].values.reshape(idx.shape)
     labels = RefPheno.loc[Ref_emb.index[idx.flatten()], "score"].values.reshape(idx.shape)
+    labelgroup = pd.DataFrame(labelgroup)
     mic_counts = (labelgroup == "Y").sum(axis=1)
     nonmic_counts = (labelgroup == "N").sum(axis=1)
     vote1 = np.where(mic_counts > nonmic_counts, "Y", "N")

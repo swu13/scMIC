@@ -9,15 +9,15 @@ integrating primary and metastatic tumor scRNA-seq data using
 embedding learning and unbalanced optimal transport.
 
 Input:
-- Primary expression matrix (gene ¡Á cell)
-- Metastatic expression matrix (gene ¡Á cell)
+- Primary expression matrix (gene * cell)
+- Metastatic expression matrix (gene * cell)
 
 Output:
 - Contribution score for each primary tumor cell
 """
 
 import torch
-import torch.nn as nn        
+import torch.nn as nn      
 
 class MLP(nn.Module):
     def __init__(
@@ -324,11 +324,18 @@ def main():
   parser.add_argument('--epsilon', type=float, default=0.5, help='Epsilon for OT')
   parser.add_argument('--rho', type=float, default=100, help='Rho for UOT')
   parser.add_argument('--top_k', type=int, default=1, help='Top k connections to keep')
+  parser.add_argument('--keep_all',action='store_true',help='Keep all OT connections')
   parser.add_argument('--seed', type=int, default=123, help='Random seed selection')
   parser.add_argument('--epochs', type=int, default=100)
   parser.add_argument('--hidden_dims', type=int, nargs='+', default=[512, 256, 128, 64, 32])
   
   args = parser.parse_args()
+  
+  if args.keep_all:
+      top_k=np.inf
+  else:
+      top_k=args.top_k
+  
   MICot(
       PriFile=args.pri,
       MetFile=args.met,
@@ -341,7 +348,7 @@ def main():
       n_iter=args.n_iter,
       epsilon=args.epsilon,
       rho=args.rho,
-      top_k=args.top_k,
+      top_k=top_k,
       seed=args.seed,
       epochs=args.epochs,
       hidden_dims=args.hidden_dims           
