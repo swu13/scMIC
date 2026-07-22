@@ -332,6 +332,8 @@ awk -F'\t' 'ARGIND==1 && $3=="gene" {match($9, /gene_id "([^"]+)"/, gid);match($
             "OMIX002487/genelist.txt"  > "OMIX002487/genelist.1.txt"
 mv "OMIX002487/genelist.1.txt" "OMIX002487/genelist.txt"
 
+#P6: delelte due to the limited number of epithelial cells for primary samples
+
 Rscript -e '
     source("../Processing.R");
     library(Seurat)
@@ -672,5 +674,6 @@ do
     --pri $PrimaryPath/Primary/PrimaryCount.csv \
     --met $file \
     --out $OutputPath/proximity_OT.csv \
-    --ot
+    --ot \
+    --top_k 20
 done
