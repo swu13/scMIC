@@ -219,7 +219,7 @@ Rscript -e '
                    nonMIC=c(PSelectedPrimaryavg[-index],rep("",maxnum-(ncol(Data)-length(index))))))
     }
     #OMIX002487
-    pateints=c("P2","P3","P4"); #,"P5" 
+    pateints=c("P2","P3","P4","P5") 
     for(patient in pateints){
       Data=readRDS(paste0("../Figure4/OMIX002487/",patient,"/Primary/Tumour/ScData.pca.rds"));  
       OPcor = read.table(paste0("../Figure4/OMIX002487/",patient,"/proximity_OT.csv"),sep="\t",header=FALSE,check.names = F);
@@ -238,8 +238,10 @@ Rscript -e '
                       nonMIC=c(PSelectedPrimaryavg[index2],rep("",maxnum-length(index2)))))
       }
     }
+    write.table(output[-1,], "MICscore.txt", sep = "\t", quote = FALSE, row.names = TRUE);
     #GSE277783
     pateints=c("Pt-1","Pt-2","Pt-3","Pt-4","Pt-5","Pt-6","Pt-7","Pt-8","Pt-9","Pt-10","Pt-11","Pt-13")
+    spatialMICcor=0
     for(patient in pateints){
       Data=readRDS(paste0("../Figure4/GSE277783/",patient,"/Primary/Tumour/ScData.pca.rds")); 
       Data$MIC = "N"
@@ -253,21 +255,20 @@ Rscript -e '
           sum_OT=sum_OT+OPcor$V1
         }
       }
-      Data$MIC  = ifelse(sum_OT>5,"Y","N");
+      Data$MIC  = sum_OT
       PSelectedPrimaryData=subset(Data, features = intersect(humangenes,VariableFeatures(Data)));
       PSelectedPrimaryMatrix=PSelectedPrimaryData@assays$RNA@layers$data;
       PSelectedPrimaryavg <- colMeans(PSelectedPrimaryMatrix);
-      index = which(Data@meta.data$MIC == "Y") 
-      if(length(index)>=100){ 
-        ttest=t.test(PSelectedPrimaryavg[index],PSelectedPrimaryavg[-index]);
-        wilcoxtest=wilcox.test(PSelectedPrimaryavg[index],PSelectedPrimaryavg[-index]);
-        print(c(patient,length(index),ncol(Data)-length(index),ttest$p.value,wilcoxtest$p.value,as.numeric(ttest$estimate)))
-        maxnum=max(length(index),ncol(Data)-length(index))
-        output=rbind(output,data.frame(sample=rep(patient,maxnum),MIC=c(PSelectedPrimaryavg[index],rep("",maxnum-length(index))),
-                   nonMIC=c(PSelectedPrimaryavg[-index],rep("",maxnum-(ncol(Data)-length(index))))))
+      index = which(Data@meta.data$MIC > 20)
+      PSelectedPrimaryavg = PSelectedPrimaryavg[index]
+      if(length(index)>3){
+        cortest = cor.test(sum_OT[index],PSelectedPrimaryavg,method="spearman")
+        print(c(patient,cortest$p.value,as.numeric(cortest$estimate),length(index)))
+        spatialMICcor=c(spatialMICcor,as.numeric(cortest$estimate))
       }
     }
-    write.table(output[-1,], "MICscore.txt", sep = "\t", quote = FALSE, row.names = TRUE);
+    spatialMICcor=spatialMICcor[-1]
+    print(t.test(spatialMICcor))
 '
 
 ############################################
