@@ -120,14 +120,14 @@ do
              ARGIND==2 && (FNR>1){print $0","a[$1]}'\
              proximity_OT.csv\
              M2pheno.csv |\
-             awk -F"," -v k="$k" 'BEGIN{TP=0; FN=0; TN=0; FP=0}(NR>1){if($2=="Y"){if($(NF-2)=="Y"){TP=TP+1}else{FN=FN+1}}else{if($(NF-2)=="N"){FP=FP+1}else{TN=TN+1}}}\
+             awk -F"," -v k="$k" 'BEGIN{TP=0; FN=0; TN=0; FP=0}{if($2=="Y"){if($(NF-2)=="Y"){TP=TP+1}else{FN=FN+1}}else{if($(NF-2)=="N"){FP=FP+1}else{TN=TN+1}}}\
              END{print "majorvote\t"k"\t"TP"\t"FN"\t"TN"\t"FP"\t"TP/(TP+FN)"\t"TN/(TN+FP)"\t"(TP+TN)/(TP+TN+FP+FN)}' >> scFoundation.result.txt
              
   awk -F"," 'ARGIND==1{a[$1]=$0}\
              ARGIND==2 && (FNR>1){print $0","a[$1]}'\
              proximity_OT.csv\
              M2pheno.csv |\
-             awk -F"," -v k="$k" 'BEGIN{TP=0; FN=0; TN=0; FP=0}(NR>1){if($2=="Y"){if($(NF)=="Y"){TP=TP+1}else{FN=FN+1}}else{if($(NF)=="Y"){FP=FP+1}else{TN=TN+1}}}\
+             awk -F"," -v k="$k" 'BEGIN{TP=0; FN=0; TN=0; FP=0}{if($2=="Y"){if($(NF)=="Y"){TP=TP+1}else{FN=FN+1}}else{if($(NF)=="Y"){FP=FP+1}else{TN=TN+1}}}\
              END{print "meanvote\t"k"\t"TP"\t"FN"\t"TN"\t"FP"\t"TP/(TP+FN)"\t"TN/(TN+FP)"\t"(TP+TN)/(TP+TN+FP+FN)}' >> scFoundation.result.txt
 done
 
